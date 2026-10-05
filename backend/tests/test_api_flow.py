@@ -7,7 +7,12 @@ from httpx import AsyncClient
 
 from tests.conftest import requires_db
 
-pytestmark = [requires_db, pytest.mark.asyncio(loop_scope="session")]
+pytestmark = [
+    requires_db,
+    pytest.mark.asyncio(loop_scope="session"),
+    # Bu modul global yig'indilarni (qoldiq, statistika, navbat) aniq tekshiradi — toza baza kerak.
+    pytest.mark.usefixtures("clean_business_data"),
+]
 
 
 async def test_auth_is_required(client: AsyncClient) -> None:

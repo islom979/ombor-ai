@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.api.deps import AnyRole, Paging, SessionDep, Staff
 from app.schemas.common import Page
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/invoices", tags=["invoices"])
 
 
 @router.get("", response_model=Page[InvoiceRead], summary="Operatsiyalar tarixi (filtrlar bilan)")
-async def list_invoices(_: AnyRole, service: Service, page: Paging, filters: Annotated[InvoiceFilters, Depends()]):
+async def list_invoices(_: AnyRole, service: Service, page: Paging, filters: Annotated[InvoiceFilters, Query()]):
     return await service.list(filters, page)
 
 

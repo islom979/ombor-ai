@@ -70,6 +70,22 @@ async def users(settings: Settings) -> dict[str, dict]:
     return accounts
 
 
+@pytest.fixture(scope="module")
+async def clean_business_data(settings: Settings, users: dict) -> None:
+    """Global yig'indilarni tekshiradigan modullar uchun: biznes jadvallarini tozalaydi
+    (foydalanuvchilar va kassa saqlanadi, kassa balansi nolga qaytariladi)."""
+    engine = create_async_engine(settings.database_url)
+    async with engine.begin() as conn:
+        await conn.execute(
+            text(
+                "truncate public.payment_allocations, public.payments, public.invoice_items, public.batches,"
+                " public.invoices, public.ai_commands, public.counterparties, public.products cascade"
+            )
+        )
+        await conn.execute(text("update public.cash_registers set balance = 0"))
+    await engine.dispose()
+
+
 @pytest.fixture(scope="session")
 async def client(settings: Settings) -> AsyncIterator[AsyncClient]:
     app = create_app(settings)
