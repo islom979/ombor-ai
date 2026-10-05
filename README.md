@@ -162,6 +162,9 @@ npm run dev                  # http://localhost:3000
 | `ombor-ai-api` (FastAPI) | `backend/` (entrypoint `app.asgi:app`, Python 3.12) | https://ombor-ai-api.vercel.app |
 | `ombor-ai-web` (Next.js) | `frontend/` | https://ombor-ai-web.vercel.app |
 
+Ikkala loyiha GitHub `islom979/ombor-ai` ga ulangan: `main` branch'ga har bir push avtomatik
+production deploy qiladi (Root Directory: `backend` / `frontend`). Qo'lda deploy:
+
 ```bash
 cd backend && vercel deploy --prod      # yoki: cd frontend && vercel deploy --prod
 ```
