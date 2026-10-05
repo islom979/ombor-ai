@@ -48,22 +48,22 @@ class SupabaseTokenVerifier:
         self._audience = settings.supabase_jwt_audience
         self._secret = settings.supabase_jwt_secret.get_secret_value() if settings.supabase_jwt_secret else None
         self._jwks_client = (
-            jwt.PyJWKClient(settings.jwks_url, cache_keys=True, lifespan=3600)
-            if not self._secret and settings.jwks_url
-            else None
+            jwt.PyJWKClient(settings.jwks_url, cache_keys=True, lifespan=3600) if settings.jwks_url else None
         )
 
     async def verify(self, token: str) -> TokenClaims:
         try:
-            if self._secret:
+            # Algoritm token sarlavhasidan olinadi, lekin faqat ruxsat etilganlar ichidan tanlanadi.
+            algorithm = jwt.get_unverified_header(token).get("alg")
+            if algorithm == "HS256" and self._secret:
                 payload = jwt.decode(token, self._secret, algorithms=["HS256"], audience=self._audience)
-            elif self._jwks_client:
+            elif algorithm in self._ASYMMETRIC_ALGORITHMS and self._jwks_client:
                 signing_key = await run_in_threadpool(self._jwks_client.get_signing_key_from_jwt, token)
                 payload = jwt.decode(
                     token, signing_key.key, algorithms=self._ASYMMETRIC_ALGORITHMS, audience=self._audience
                 )
             else:
-                raise AuthenticationError("JWT tekshiruvi sozlanmagan (SUPABASE_JWT_SECRET yoki SUPABASE_URL)")
+                raise AuthenticationError(f"Token algoritmi ({algorithm}) uchun tekshiruv sozlanmagan")
         except jwt.ExpiredSignatureError as exc:
             raise AuthenticationError("Token muddati tugagan") from exc
         except jwt.PyJWTError as exc:
