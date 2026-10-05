@@ -4,7 +4,6 @@ from collections.abc import AsyncIterator
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
 
 from app.core.config import Settings
 
@@ -18,8 +17,17 @@ def create_engine(settings: Settings) -> AsyncEngine:
             "statement_cache_size": 0,
             "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4()}__",
         }
+        # Serverless (Vercel Fluid) instansiyasi bir necha so'rovga xizmat qiladi — kichik pool
+        # ulanishni qayta ishlatib, har so'rovdagi TCP+TLS+auth (bir necha RTT) xarajatini yo'qotadi.
+        # pre_ping muzlatilgan instansiyadan qolgan "o'lik" ulanishlarni almashtiradi.
         return create_async_engine(
-            settings.database_url, echo=settings.db_echo, poolclass=NullPool, connect_args=connect_args
+            settings.database_url,
+            echo=settings.db_echo,
+            pool_size=2,
+            max_overflow=3,
+            pool_recycle=240,
+            pool_pre_ping=True,
+            connect_args=connect_args,
         )
 
     return create_async_engine(

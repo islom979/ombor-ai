@@ -121,12 +121,15 @@ class InvoiceRepository:
             base = base.where(Invoice.created_at <= date_to)
         ids = base.subquery()
 
-        revenue = await self._session.scalar(
-            select(func.coalesce(func.sum(Invoice.total), 0)).where(Invoice.id.in_(select(ids.c.id)))
+        revenue = (
+            select(func.coalesce(func.sum(Invoice.total), 0))
+            .where(Invoice.id.in_(select(ids.c.id)))
+            .scalar_subquery()
         )
-        cost = await self._session.scalar(
-            select(func.coalesce(func.sum(InvoiceItem.cost_price * InvoiceItem.quantity), 0)).where(
-                InvoiceItem.invoice_id.in_(select(ids.c.id))
-            )
+        cost = (
+            select(func.coalesce(func.sum(InvoiceItem.cost_price * InvoiceItem.quantity), 0))
+            .where(InvoiceItem.invoice_id.in_(select(ids.c.id)))
+            .scalar_subquery()
         )
-        return Decimal(revenue or 0), Decimal(cost or 0)
+        row = (await self._session.execute(select(revenue, cost))).one()
+        return Decimal(row[0] or 0), Decimal(row[1] or 0)

@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.enums import CounterpartyKind, InvoiceType
+from app.domain.enums import InvoiceType
 from app.repositories.counterparties import CounterpartyRepository
 from app.repositories.invoices import InvoiceRepository, day_end, day_start
 from app.repositories.payments import CashRegisterRepository
@@ -28,19 +28,19 @@ class StatisticsService:
             for t in InvoiceType
         ]
         revenue, cost = await self._invoices.sales_totals(start, end)
-        receivables, payables = await self._counterparties.balance_totals()
+        parties = await self._counterparties.summary()
 
         return Statistics(
             date_from=date_from,
             date_to=date_to,
-            suppliers_count=await self._counterparties.count(CounterpartyKind.SUPPLIER),
-            clients_count=await self._counterparties.count(CounterpartyKind.CLIENT),
+            suppliers_count=parties.suppliers,
+            clients_count=parties.clients,
             products_count=await self._products.count_active(),
             revenue=revenue,
             cost_of_goods=cost,
             profit=revenue - cost,
-            receivables=receivables,
-            payables=payables,
+            receivables=parties.receivables,
+            payables=parties.payables,
             cash_registers=[CashRegisterRead.model_validate(r) for r in await self._registers.list_active()],
             operations=operations,
         )

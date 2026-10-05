@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from decimal import Decimal
 from uuid import UUID
 
@@ -56,24 +57,26 @@ class CounterpartyRepository:
             .values(balance=Counterparty.balance + delta)
         )
 
-    async def count(self, kind: CounterpartyKind) -> int:
-        return int(
-            await self._session.scalar(
-                select(func.count()).where(Counterparty.kind == kind, Counterparty.is_active)
+    async def summary(self) -> CounterpartySummary:
+        """Statistika uchun barcha ko'rsatkichlar — bitta so'rovda (FILTER bilan)."""
+        row = (
+            await self._session.execute(
+                select(
+                    func.count().filter(Counterparty.kind == CounterpartyKind.SUPPLIER),
+                    func.count().filter(Counterparty.kind == CounterpartyKind.CLIENT),
+                    func.coalesce(func.sum(-Counterparty.balance).filter(Counterparty.balance < 0), 0),
+                    func.coalesce(func.sum(Counterparty.balance).filter(Counterparty.balance > 0), 0),
+                ).where(Counterparty.is_active)
             )
-            or 0
+        ).one()
+        return CounterpartySummary(
+            suppliers=int(row[0]), clients=int(row[1]), receivables=Decimal(row[2]), payables=Decimal(row[3])
         )
 
-    async def balance_totals(self) -> tuple[Decimal, Decimal]:
-        """(klientlar bizga qarzi, bizning ta'minotchilarga qarzimiz) — ikkalasi ham musbat son."""
-        receivables = await self._session.scalar(
-            select(func.coalesce(func.sum(-Counterparty.balance), 0)).where(
-                Counterparty.is_active, Counterparty.balance < 0
-            )
-        )
-        payables = await self._session.scalar(
-            select(func.coalesce(func.sum(Counterparty.balance), 0)).where(
-                Counterparty.is_active, Counterparty.balance > 0
-            )
-        )
-        return Decimal(receivables or 0), Decimal(payables or 0)
+
+@dataclass(frozen=True, slots=True)
+class CounterpartySummary:
+    suppliers: int
+    clients: int
+    receivables: Decimal  # klientlarning bizga qarzi (musbat)
+    payables: Decimal  # bizning ta'minotchilarga qarzimiz (musbat)
