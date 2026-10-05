@@ -7,9 +7,9 @@ from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, Text, func, text
+from sqlalchemy import BigInteger, Boolean, DateTime, Float, ForeignKey, Identity, Integer, Numeric, Text, func, text
 from sqlalchemy import Enum as SAEnum
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import INET, JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -211,3 +211,30 @@ class AiCommand(Base):
     created_at: Mapped[datetime] = created_at_col()
 
     user: Mapped[Profile | None] = relationship(lazy="raise")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(always=True), primary_key=True)
+    created_at: Mapped[datetime] = created_at_col()
+    actor_kind: Mapped[str] = mapped_column(Text)
+    user_id: Mapped[UUID | None] = mapped_column(ForeignKey("profiles.id"))
+    user_email: Mapped[str | None] = mapped_column(Text)
+    user_role: Mapped[UserRole | None] = mapped_column(pg_enum(UserRole, "user_role"))
+    action: Mapped[str] = mapped_column(Text)
+    method: Mapped[str] = mapped_column(Text)
+    path: Mapped[str] = mapped_column(Text)
+    path_params: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    query: Mapped[str | None] = mapped_column(Text)
+    request_body: Mapped[Any | None] = mapped_column(JSONB)
+    status_code: Mapped[int] = mapped_column(Integer)
+    duration_ms: Mapped[int] = mapped_column(Integer)
+    ip: Mapped[str | None] = mapped_column(INET)
+    user_agent: Mapped[str | None] = mapped_column(Text)
+    country: Mapped[str | None] = mapped_column(Text)
+    region: Mapped[str | None] = mapped_column(Text)
+    city: Mapped[str | None] = mapped_column(Text)
+    latitude: Mapped[float | None] = mapped_column(Float)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    request_id: Mapped[str | None] = mapped_column(Text)

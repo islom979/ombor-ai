@@ -15,6 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
 from app.api.router import api_router
+from app.core.audit_middleware import AuditMiddleware
 from app.core.config import Settings, get_settings
 from app.core.errors import AppError
 from app.core.logging import configure_logging
@@ -87,6 +88,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.session_factory = create_session_factory(engine)
     app.state.token_verifier = SupabaseTokenVerifier(settings)
     app.state.api_key_verifier = ApiKeyVerifier(settings)
+    if settings.audit_enabled:
+        # CORS'dan oldin qo'shiladi → CORS tashqi qatlam bo'ladi, audit esa yakuniy status kodini ko'radi.
+        app.add_middleware(
+            AuditMiddleware,
+            session_factory=app.state.session_factory,
+            trust_proxy=settings.trust_proxy,
+            log_reads=settings.audit_log_reads,
+        )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,

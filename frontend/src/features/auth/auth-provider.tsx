@@ -4,7 +4,7 @@ import type { Session } from "@supabase/supabase-js"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 
-import { usersApi } from "@/lib/api/endpoints"
+import { authEventsApi, usersApi } from "@/lib/api/endpoints"
 import { isConfigured } from "@/lib/env"
 import type { Me } from "@/lib/api/types"
 import { queryKeys } from "@/lib/query-keys"
@@ -52,9 +52,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await getSupabase().auth.signInWithPassword({ email, password })
     if (error) throw new Error(error.message === "Invalid login credentials" ? "Email yoki parol noto'g'ri" : error.message)
+    // Audit jurnali: IP va joylashuvni backend qayd etadi. Xato kirishni to'xtatmasligi kerak.
+    await authEventsApi.record("login").catch(() => undefined)
   }, [])
 
   const signOut = useCallback(async () => {
+    // Token hali amal qilayotgan paytda yuboriladi.
+    await authEventsApi.record("logout").catch(() => undefined)
     await getSupabase().auth.signOut()
   }, [])
 

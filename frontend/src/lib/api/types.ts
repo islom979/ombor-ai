@@ -247,3 +247,40 @@ export interface AiCommand {
   finished_at: string | null
   created_at: string
 }
+
+export type AuditCategory = "auth" | "write" | "read" | "error"
+
+export interface AuditLog {
+  id: number
+  created_at: string
+  actor_kind: "user" | "agent" | "anonymous"
+  user_id: UUID | null
+  user_email: string | null
+  user_role: UserRole | null
+  action: string
+  method: string
+  path: string
+  path_params: Record<string, string>
+  query: string | null
+  request_body: unknown
+  status_code: number
+  duration_ms: number
+  ip: string | null
+  user_agent: string | null
+  country: string | null
+  region: string | null
+  city: string | null
+  latitude: number | null
+  longitude: number | null
+  request_id: string | null
+}
+
+export interface AuditFilters {
+  category?: AuditCategory
+  ip?: string
+  search?: string
+  date_from?: string
+  date_to?: string
+  page?: number
+  size?: number
+}

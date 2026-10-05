@@ -34,7 +34,9 @@ async def get_principal(
 ) -> Principal:
     if api_key:
         verifier: ApiKeyVerifier = request.app.state.api_key_verifier
-        return verifier.verify(api_key)
+        principal = verifier.verify(api_key)
+        request.state.principal = principal  # audit jurnali uchun
+        return principal
 
     if bearer is None or bearer.scheme.lower() != "bearer":
         raise AuthenticationError("Autentifikatsiya talab qilinadi")
@@ -44,7 +46,9 @@ async def get_principal(
     profile = await ProfileRepository(session).get(claims.user_id)
     if profile is None:
         raise PermissionDeniedError("Foydalanuvchi profili topilmadi")
-    return Principal(kind="user", role=profile.role, user_id=profile.id, email=profile.email)
+    principal = Principal(kind="user", role=profile.role, user_id=profile.id, email=profile.email)
+    request.state.principal = principal  # audit jurnali uchun
+    return principal
 
 
 CurrentPrincipal = Annotated[Principal, Depends(get_principal)]

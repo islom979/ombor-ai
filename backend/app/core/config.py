@@ -38,6 +38,19 @@ class Settings(BaseSettings):
     ai_agent_api_keys: Annotated[list[SecretStr], NoDecode] = []
     ai_agent_role: Literal["admin", "manager", "viewer"] = "manager"
 
+    # --- Audit jurnali -------------------------------------------------------------
+    audit_enabled: bool = True
+    # false — faqat yozish amallari (POST/PATCH/DELETE) va kirish/chiqish jurnalga tushadi.
+    audit_log_reads: bool = True
+    # Proxy (Vercel) sarlavhalaridagi IP va geolokatsiyaga ishonish. Vercel'da avtomatik yoqiladi
+    # (VERCEL=1); boshqa joyda faqat ishonchli reverse-proxy ortida yoqing.
+    trust_proxy_headers: bool = False
+    vercel: str | None = None
+
+    @property
+    def trust_proxy(self) -> bool:
+        return self.trust_proxy_headers or self.vercel == "1"
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_origins(cls, value: object) -> object:

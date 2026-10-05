@@ -53,7 +53,7 @@ async def users(settings: Settings) -> dict[str, dict]:
             text(
                 "truncate public.payment_allocations, public.payments, public.invoice_items, public.batches,"
                 " public.invoices, public.ai_commands, public.counterparties, public.products,"
-                " public.cash_registers, public.profiles, auth.users cascade"
+                " public.cash_registers, public.audit_logs, public.profiles, auth.users cascade"
             )
         )
         for name in ("admin", "manager", "viewer"):  # tartib muhim: birinchisi admin bo'ladi

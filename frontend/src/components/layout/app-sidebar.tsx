@@ -4,6 +4,7 @@ import {
   BotIcon,
   ChartLineIcon,
   ChevronLeftIcon,
+  FileClockIcon,
   LogOutIcon,
   MoonIcon,
   MoveIcon,
@@ -102,6 +103,17 @@ export function AppSidebar({ collapsed = false, onToggle, onNavigate }: AppSideb
           >
             <UserCogIcon className="size-4.5 shrink-0" />
             {!collapsed && "Role"}
+          </Link>
+        )}
+        {isAdmin && (
+          <Link
+            href="/ombor/loglar"
+            onClick={onNavigate}
+            className={linkClass(pathname === "/ombor/loglar")}
+            title={collapsed ? "Loglar" : undefined}
+          >
+            <FileClockIcon className="size-4.5 shrink-0" />
+            {!collapsed && "Loglar"}
           </Link>
         )}
         <button

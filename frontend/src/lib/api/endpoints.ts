@@ -1,6 +1,8 @@
 import { api } from "@/lib/api/client"
 import type {
   AiCommand,
+  AuditFilters,
+  AuditLog,
   CashRegister,
   ChiqimInput,
   Counterparty,
@@ -77,4 +79,12 @@ export const usersApi = {
   me: () => api.get<Me>("/users/me"),
   list: () => api.get<Profile[]>("/users"),
   updateRole: (id: UUID, role: UserRole) => api.patch<Profile>(`/users/${id}/role`, { role }),
+}
+
+export const auditApi = {
+  list: (filters: AuditFilters, signal?: AbortSignal) => api.get<Page<AuditLog>>("/audit-logs", { ...filters }, signal),
+}
+
+export const authEventsApi = {
+  record: (event: "login" | "logout") => api.post<void>("/auth/events", { event }),
 }
